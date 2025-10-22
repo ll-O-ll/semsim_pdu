@@ -1,6 +1,6 @@
 """
 PDU ICD Integration Test
-Tests OBC-to-SEMSIM communication via TCP/IP with ICD-compliant commands and responses
+Tests OBC-to-SEMSIM communication via UDP with ICD-compliant commands and responses
 
 PREREQUISITES:
     1. Start SEMSIM server in a separate terminal:
