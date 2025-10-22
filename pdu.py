@@ -40,19 +40,19 @@ def GetMsgAcknowlegement(j_command_packet, apid, state_manager):
         unit.msg_acknowledgement.RequestedMsgId = cmd
         
         if "PduGoOperate" in str(cmd):
-            if unit.status.PduState in [1, 4]:
+            if unit.pdu_status.PduState in [1, 4]:
                 unit.msg_acknowledgement.PduReturnCode = 0
             else:
                 unit.msg_acknowledgement.PduReturnCode = 1
                 
         elif "PduGoSafe" in str(cmd):
-            if unit.status.PduState == 2:
+            if unit.pdu_status.PduState == 2:
                 unit.msg_acknowledgement.PduReturnCode = 0
             else:
                 unit.msg_acknowledgement.PduReturnCode = 1
                 
         elif "PduGoMaintenance" in str(cmd):
-            if unit.status.PduState in [2, 3]:
+            if unit.pdu_status.PduState in [2, 3]:
                 unit.msg_acknowledgement.PduReturnCode = 0
             else:
                 unit.msg_acknowledgement.PduReturnCode = 1
@@ -67,7 +67,7 @@ def ObcHeartBeat(ObcHeartBeat, apid, state_manager):
     """Handle OBC heartbeat"""
     unit = state_manager.get_unit(apid)
     
-    updated_status = unit.status.PduState
+    updated_status = unit.pdu_status.PduState
     LOGGER.info(f"PDU internal updated_status {updated_status}")
     
     updated_heartbeat = unit.heartbeat.HeartBeat
@@ -83,7 +83,7 @@ def ObcHeartBeat(ObcHeartBeat, apid, state_manager):
 def GetPduStatus(GetPduStatus, apid, state_manager):
     """Get PDU status"""
     unit = state_manager.get_unit(apid)
-    return json.dumps(unit.status.to_dict())
+    return json.dumps(unit.pdu_status.to_dict())
 
 
 def GetUnitLineStates(GetUnitLineStates, apid, state_manager):
@@ -318,5 +318,5 @@ def GetConvertedMeasurementsPeriodic(ConvertedMeasurements, apid, state_manager)
 def PduGoTo(cmd, apid, state_manager):
     """Change PDU state"""
     unit = state_manager.get_unit(apid)
-    unit.status.PduState = PduState[cmd]
+    unit.pdu_status.PduState = PduState[cmd]
     LOGGER.info(f"PDU state changed to: {cmd} ({PduState[cmd]})")
