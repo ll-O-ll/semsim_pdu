@@ -261,7 +261,7 @@ def SpacePacketCommand(count, command, apid, type, subtype):
         for p in data_field_header_frame:
             data_pack_data_field_header_frame += p.to_bytes(1, 'big')
         packet_dataheaderlength = len(data_pack_data_field_header_frame)
-        packet_datalength = packet_dataheaderlength + packet_dataframelength - 2
+        packet_datalength = packet_dataheaderlength + packet_dataframelength - 1
         databytes = bytes([(tc_version << 5) + (tc_type << 4) + (tc_dfh_flag << 3) + (tc_apid >> 8), 
                           (tc_apid & 0xFF), 
                           (tc_seq_flag << 6) + (tc_seq_count >> 8), 
