@@ -107,22 +107,49 @@ The MCP Manager (`mcp_manager.py`) controls 71 unit lines via 6 MCP23017 GPIO ex
 ## Testing
 
 \`\`\`bash
-# Run all tests
+# Run ICD integration test
 bash run_tests.sh
 
-# Or run specific test suites
-python -m unittest tests.test_pdu_state
-python -m unittest tests.test_pdu_commands
-python -m unittest tests.test_communication
-python -m unittest tests.test_unit_lines
+# Or run directly
+python -m unittest tests.test_icd_integration -v
 \`\`\`
 
-### Test Coverage
+### ICD Integration Test
 
-- **test_pdu_state.py**: State management and dataclass functionality
-- **test_pdu_commands.py**: PDU command processing and state transitions
-- **test_communication.py**: Packet encoding/decoding and communication flow
-- **test_unit_lines.py**: Unit line control and MCP hardware integration (with mocked hardware)
+The `test_icd_integration.py` test suite validates complete OBC-to-SEMSIM communication:
+
+- **Automatic Server Management**: Starts SEMSIM server before tests, stops after completion
+- **TCP/IP Communication**: Sends CCSDS Space Packets via UDP
+- **ICD Compliance**: Verifies all responses match PDU Interface Control Document
+- **Comprehensive Coverage**: Tests all major commands and state transitions
+
+#### Test Cases
+
+1. **OBC Heartbeat**: Heartbeat exchange with PDU
+2. **Get PDU Status**: Status query and response validation
+3. **Get Unit Line States**: Unit line state retrieval
+4. **State Transitions**: PduGoOperate, PduGoSafe, PduGoMaintenance
+5. **Set Unit Power Lines**: Enable/disable power lines
+6. **Get Converted Measurements**: ADC measurement retrieval
+7. **Reset Unit Power Lines**: Reset specific power lines
+8. **Multiple Commands Sequence**: Complex command sequences
+9. **Invalid State Transitions**: Error handling validation
+
+#### Running Tests
+
+\`\`\`bash
+# Run with verbose output
+python -m unittest tests.test_icd_integration -v
+
+# Run specific test
+python -m unittest tests.test_icd_integration.TestPduIcdIntegration.test_01_heartbeat -v
+\`\`\`
+
+The test automatically:
+1. Starts SEMSIM server on `127.0.0.1:5004`
+2. Executes all test cases
+3. Validates ICD-compliant responses
+4. Stops SEMSIM server cleanly
 
 ## PDU States
 
@@ -134,7 +161,7 @@ python -m unittest tests.test_unit_lines
 
 ## APIDs
 
-- **0x65**: Nominal PDU
+- **0x65**: Nominal PDU (0x100 in tests)
 - **0x66**: Redundant PDU
 
 ## Logical Unit IDs
@@ -164,10 +191,7 @@ pdu-simulator/
 ├── mcp.py                 # MCP23017 GPIO driver (low-level)
 ├── mcp_manager.py         # MCP hardware manager (high-level)
 ├── tests/
-│   ├── test_pdu_state.py       # State management tests
-│   ├── test_pdu_commands.py    # Command processing tests
-│   ├── test_communication.py   # Communication tests
-│   └── test_unit_lines.py      # Unit line and MCP tests
+│   └── test_icd_integration.py  # ICD integration test
 ├── run_tests.sh           # Test runner script
 └── README.md
 \`\`\`
@@ -176,7 +200,7 @@ pdu-simulator/
 
 1. Add command handler in `pdu.py`
 2. Add command processing in `tmtc_manager.py` `cmd_processing()`
-3. Add tests in `tests/test_pdu_commands.py`
+3. Add test case in `tests/test_icd_integration.py`
 
 ### Hardware Requirements (Emulator Mode)
 
@@ -209,6 +233,11 @@ pdu-simulator/
 - Check PDU is in OPERATE state (state 2)
 - Verify commands are properly formatted CCSDS packets
 - Enable debug logging in code
+
+**Test Failures**
+- Ensure no other process is using port 5004
+- Check SEMSIM starts successfully (wait 3 seconds for initialization)
+- Verify Python version is 3.7+ for proper subprocess handling
 
 ## License
 

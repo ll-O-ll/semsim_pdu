@@ -1,22 +1,23 @@
 #!/bin/bash
-# Run all PDU tests
+# Run PDU ICD Integration Test
 
-echo "Running PDU Simulator Tests..."
-echo "=============================="
-
-# Run unit tests
+echo "======================================================================"
+echo "PDU ICD Integration Test"
+echo "======================================================================"
 echo ""
-echo "Unit Tests - State Management"
-python -m unittest tests.test_pdu_state -v
+echo "This test will:"
+echo "  1. Start SEMSIM server in simulator mode"
+echo "  2. Send OBC commands via TCP/IP"
+echo "  3. Verify ICD-compliant responses"
+echo ""
+echo "Starting test suite..."
+echo "======================================================================"
+echo ""
+
+# Run ICD integration test
+python -m unittest tests.test_icd_integration -v
 
 echo ""
-echo "Unit Tests - PDU Commands"
-python -m unittest tests.test_pdu_commands -v
-
-echo ""
-echo "Communication Tests"
-python -m unittest tests.test_communication -v
-
-echo ""
-echo "=============================="
-echo "All tests completed!"
+echo "======================================================================"
+echo "Test completed!"
+echo "======================================================================"
