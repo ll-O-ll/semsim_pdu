@@ -10,6 +10,7 @@ Power Distribution Unit (PDU) simulator and emulator for satellite systems.
 - **CCSDS Protocol**: Space Packet protocol for TMTC
 - **Dual PDU Support**: Nominal (0x65) and Redundant (0x66) units
 - **Unit Line Control**: 71 power distribution lines controlled via MCP23017 GPIO expanders
+- **Cross-Platform**: Simulator mode works on Windows, Linux, and macOS
 
 ## Installation
 
@@ -17,8 +18,11 @@ Power Distribution Unit (PDU) simulator and emulator for satellite systems.
 # Install dependencies
 pip install pyserial smbus2
 
-# For emulator mode (hardware support)
+# For emulator mode (hardware support - Linux/Raspberry Pi only)
 pip install adafruit-circuitpython-mcp230xx
+
+# Note: Emulator mode requires Linux with I2C/GPIO support
+# Simulator mode works on all platforms (Windows, Linux, macOS)
 \`\`\`
 
 ## Usage
@@ -176,12 +180,20 @@ pdu-simulator/
 
 ### Hardware Requirements (Emulator Mode)
 
+- **Platform**: Linux or Raspberry Pi (I2C and GPIO support required)
+- **Note**: Windows and macOS are not supported for emulator mode due to hardware limitations
 - **Raspberry Pi** or compatible SBC with I2C support
 - **6x MCP23017** GPIO expanders (addresses 0x22-0x27)
 - **RS422 transceiver** connected to serial port
 - **I2C bus** enabled and configured
 
-### Troubleshooting
+## Troubleshooting
+
+**Windows Compatibility**
+- Simulator mode works on Windows without any hardware libraries
+- If you see `NotImplementedError` from adafruit-blinka, you're trying to run emulator mode on Windows
+- Solution: Use `--mode simulator` instead of `--mode emulator`
+- For hardware testing, use Linux/Raspberry Pi
 
 **MCP Hardware Not Found**
 - Check I2C is enabled: `sudo raspi-config` → Interface Options → I2C

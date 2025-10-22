@@ -21,9 +21,9 @@ try:
     import digitalio
     from adafruit_mcp230xx.mcp23017 import MCP23017
     HARDWARE_AVAILABLE = True
-except ImportError:
+except (ImportError, NotImplementedError) as e:
     HARDWARE_AVAILABLE = False
-    LOGGER.warning("Hardware libraries not available - running in simulator mode only")
+    LOGGER.warning(f"Hardware libraries not available - running in simulator mode only: {e}")
 
 
 def configure_hardware():
