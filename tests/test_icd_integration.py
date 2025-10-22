@@ -79,19 +79,20 @@ class TestPduIcdIntegration(unittest.TestCase):
         """Helper to create test packet"""
         command_bytes = bytes(command_json, 'utf-8')
         
-        # Packet header
+        # Packet header - must match SpacePacketCommand in tmtc_manager.py
         tc_version = 0x00
-        tc_type = 0x01
+        tc_type = 0x00  # Changed from 0x01 to 0x00 to match SEMSIM
         tc_dfh_flag = 0x01
         tc_apid = APID
         tc_seq_flag = 0x03
         
-        # Data field header
+        # Data field header (12 bytes total)
         data_field_header = [0x10, packet_type, subtype, 0x00]
         data_pack_cuck = [0x2F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         data_field_header_frame = data_field_header + data_pack_cuck
         
-        packet_header_length = len(data_field_header_frame)
+        # packet_datalength = header_length + payload_length - 1 (CCSDS standard)
+        packet_header_length = len(data_field_header_frame)  # 12 bytes
         packet_data_length_field = packet_header_length + len(command_bytes) - 1
         
         # Build packet
