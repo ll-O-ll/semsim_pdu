@@ -106,8 +106,21 @@ The MCP Manager (`mcp_manager.py`) controls 71 unit lines via 6 MCP23017 GPIO ex
 
 ## Testing
 
+### Prerequisites
+
+Before running tests, you must start the SEMSIM server in a separate terminal:
+
 \`\`\`bash
-# Run ICD integration test
+# Terminal 1: Start SEMSIM server
+python semsim.py --mode simulator --tcp-ip 127.0.0.1 --tcp-port 5004
+
+# Wait for "TMTC Manager started" message
+\`\`\`
+
+Then run the tests:
+
+\`\`\`bash
+# Terminal 2: Run tests
 bash run_tests.sh
 
 # Or run directly
@@ -118,8 +131,7 @@ python -m unittest tests.test_icd_integration -v
 
 The `test_icd_integration.py` test suite validates complete OBC-to-SEMSIM communication:
 
-- **Automatic Server Management**: Starts SEMSIM server before tests, stops after completion
-- **TCP/IP Communication**: Sends CCSDS Space Packets via UDP
+- **TCP/IP Communication**: Sends CCSDS Space Packets via UDP to running SEMSIM server
 - **ICD Compliance**: Verifies all responses match PDU Interface Control Document
 - **Comprehensive Coverage**: Tests all major commands and state transitions
 
@@ -128,7 +140,7 @@ The `test_icd_integration.py` test suite validates complete OBC-to-SEMSIM commun
 1. **OBC Heartbeat**: Heartbeat exchange with PDU
 2. **Get PDU Status**: Status query and response validation
 3. **Get Unit Line States**: Unit line state retrieval
-4. **State Transitions**: PduGoOperate, PduGoSafe, PduGoMaintenance
+4. **State Transitions**: PduGoOperate, PduGoSafe state changes
 5. **Set Unit Power Lines**: Enable/disable power lines
 6. **Get Converted Measurements**: ADC measurement retrieval
 7. **Reset Unit Power Lines**: Reset specific power lines
@@ -138,18 +150,23 @@ The `test_icd_integration.py` test suite validates complete OBC-to-SEMSIM commun
 #### Running Tests
 
 \`\`\`bash
-# Run with verbose output
+# Start SEMSIM first (Terminal 1)
+python semsim.py --mode simulator --tcp-ip 127.0.0.1 --tcp-port 5004
+
+# Run tests (Terminal 2)
 python -m unittest tests.test_icd_integration -v
 
 # Run specific test
 python -m unittest tests.test_icd_integration.TestPduIcdIntegration.test_01_heartbeat -v
 \`\`\`
 
-The test automatically:
-1. Starts SEMSIM server on `127.0.0.1:5004`
-2. Executes all test cases
-3. Validates ICD-compliant responses
-4. Stops SEMSIM server cleanly
+The test will:
+1. Connect to the running SEMSIM server on `127.0.0.1:5004`
+2. Execute all test cases
+3. Validate ICD-compliant responses
+4. Report results
+
+**Note**: If SEMSIM is not running, the test will fail with a connection error message.
 
 ## PDU States
 

@@ -1,15 +1,22 @@
 """
 PDU ICD Integration Test
 Tests OBC-to-SEMSIM communication via TCP/IP with ICD-compliant commands and responses
+
+PREREQUISITES:
+    1. Start SEMSIM server in a separate terminal:
+       python semsim.py --mode simulator --tcp-ip 127.0.0.1 --tcp-port 5004
+    
+    2. Wait for server to be ready (you'll see "TMTC Manager started")
+    
+    3. Run this test:
+       python -m pytest tests/test_icd_integration.py -v
+       OR
+       python tests/test_icd_integration.py
 """
 import unittest
 import socket
 import json
 import time
-import struct
-import subprocess
-import sys
-from threading import Thread
 
 # Test configuration
 TEST_IP = "127.0.0.1"
@@ -20,52 +27,19 @@ APID = 0x100  # PDU APID
 class TestPduIcdIntegration(unittest.TestCase):
     """Integration test for PDU ICD compliance"""
     
-    @classmethod
-    def setUpClass(cls):
-        """Start SEMSIM server before tests"""
-        print("\n" + "="*70)
-        print("Starting SEMSIM server in simulator mode...")
-        print("="*70)
-        
-        # Start SEMSIM in a subprocess
-        cls.semsim_process = subprocess.Popen(
-            [sys.executable, "semsim.py", "--mode", "simulator", 
-             "--tcp-ip", TEST_IP, "--tcp-port", str(TEST_PORT)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # Wait for server to start
-        time.sleep(3)
-        
-        # Check if process is still running
-        if cls.semsim_process.poll() is not None:
-            stdout, stderr = cls.semsim_process.communicate()
-            raise RuntimeError(f"SEMSIM failed to start:\nSTDOUT: {stdout}\nSTDERR: {stderr}")
-        
-        print("SEMSIM server started successfully")
-        print("="*70 + "\n")
-    
-    @classmethod
-    def tearDownClass(cls):
-        """Stop SEMSIM server after tests"""
-        print("\n" + "="*70)
-        print("Stopping SEMSIM server...")
-        print("="*70)
-        
-        if cls.semsim_process:
-            cls.semsim_process.terminate()
-            cls.semsim_process.wait(timeout=5)
-        
-        print("SEMSIM server stopped")
-        print("="*70 + "\n")
-    
     def setUp(self):
         """Create UDP socket for each test"""
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.settimeout(5.0)  # 5 second timeout
         self.sequence_count = 0
+        
+        # Test connection to SEMSIM
+        try:
+            self.send_command({"ObcHeartBeat": {"HeartBeat": 0}}, packet_type=3, subtype=1)
+            print("\n✓ Connected to SEMSIM server")
+        except socket.timeout:
+            self.fail("Cannot connect to SEMSIM server. Please start SEMSIM first:\n"
+                     f"  python semsim.py --mode simulator --tcp-ip {TEST_IP} --tcp-port {TEST_PORT}")
     
     def tearDown(self):
         """Close socket after each test"""
