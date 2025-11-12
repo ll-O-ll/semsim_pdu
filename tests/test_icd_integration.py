@@ -362,21 +362,28 @@ class TestPduIcdIntegration(unittest.TestCase):
         # Ensure we're in Operate state first
         command = {"PduGoOperate": {}}
         self.send_command(command, packet_type=1, subtype=1, expect_response=False)
-        self.socket.recvfrom(4096)
+        
+        # Receive acknowledgement for PduGoOperate
+        response_data, _ = self.socket.recvfrom(4096)
+        apid, msg_type, subtype, ack_response = self.decode_space_packet(response_data)
+        print(f"← Operate Ack: {ack_response}")
+        
         time.sleep(0.5)
         
         # Transition to Safe
         command = {"PduGoSafe": {}}
         self.send_command(command, packet_type=1, subtype=1, expect_response=False)
         
-        # Receive acknowledgement
+        # Receive acknowledgement for PduGoSafe
         response_data, _ = self.socket.recvfrom(4096)
         apid, msg_type, subtype, ack_response = self.decode_space_packet(response_data)
         
+        print(f"← Safe Ack: {ack_response}")
+        
         # Verify acknowledgement
         self.assertIsNotNone(ack_response)
-        self.assertIn("PduMsgAcknowledgement", ack_response)
-        self.assertEqual(ack_response["PduMsgAcknowledgement"]["PduReturnCode"], 0)
+        self.assertIn("MsgAcknowledgement", ack_response)
+        self.assertEqual(ack_response["MsgAcknowledgement"]["PduReturnCode"], 0)
         
         # Verify state changed
         time.sleep(0.5)
@@ -401,7 +408,11 @@ class TestPduIcdIntegration(unittest.TestCase):
             }
         }
         self.send_command(command, packet_type=1, subtype=1, expect_response=False)
-        self.socket.recvfrom(4096)
+        
+        response_data, _ = self.socket.recvfrom(4096)
+        apid, msg_type, subtype, ack_response = self.decode_space_packet(response_data)
+        print(f"← Set Ack: {ack_response}")
+        
         time.sleep(0.5)
         
         # Reset specific lines
@@ -412,7 +423,11 @@ class TestPduIcdIntegration(unittest.TestCase):
             }
         }
         self.send_command(command, packet_type=1, subtype=1, expect_response=False)
-        self.socket.recvfrom(4096)
+        
+        response_data, _ = self.socket.recvfrom(4096)
+        apid, msg_type, subtype, ack_response = self.decode_space_packet(response_data)
+        print(f"← Reset Ack: {ack_response}")
+        
         time.sleep(0.5)
         
         # Verify lines were reset
