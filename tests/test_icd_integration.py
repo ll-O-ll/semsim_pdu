@@ -320,9 +320,11 @@ class TestPduIcdIntegration(unittest.TestCase):
         }
         self.send_command(command, packet_type=1, subtype=1, expect_response=False)
         
-        # Wait for ack
-        self.socket.recvfrom(4096)
-        time.sleep(0.5)
+        # Receive acknowledgement
+        response_data, _ = self.socket.recvfrom(4096)
+        apid, msg_type, subtype, ack_response = self.decode_space_packet(response_data)
+        
+        print(f"← Set Ack: {ack_response}")
         
         # Get measurements
         command = {
@@ -330,7 +332,10 @@ class TestPduIcdIntegration(unittest.TestCase):
                 "LogicUnitId": 2  # ReactionWheelEnSel
             }
         }
-        apid, msg_type, subtype, response = self.send_command(command, packet_type=3, subtype=131)
+        self.send_command(command, packet_type=3, subtype=131)
+
+        response, _ = self.socket.recvfrom(4096)
+        apid, msg_type, subtype, ack_response = self.decode_space_packet(response)
         
         # Verify acknowledgement
         self.assertIsNotNone(response)
