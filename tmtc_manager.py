@@ -121,7 +121,17 @@ def tmtc_manager(state_manager, localIP, tclocalPort, hardware_mode=False):
                 pdu_r_status = 1
             
             if pdu_n_status or pdu_r_status:
-                customize_listening(UDPServerSocket, threads, state_manager)
+                try:
+                    customize_listening(UDPServerSocket, threads, state_manager)
+                except ConnectionResetError as e:
+                    LOGGER.warning(f"Connection reset by client: {e}")
+                    time.sleep(0.1)  # Brief pause before continuing
+                except OSError as e:
+                    if "WinError 10054" in str(e):
+                        LOGGER.warning("Client connection forcibly closed (Windows)")
+                        time.sleep(0.1)
+                    else:
+                        raise
                 
     except Exception as e:
         time.sleep(1)
@@ -288,7 +298,18 @@ def customize_listening(UDPServerSocket, threads, state_manager):
     """Listen for incoming commands"""
     bufferSize = 4096
     count = 0
-    byteAddressPair = UDPServerSocket.recvfrom(bufferSize)
+    
+    try:
+        byteAddressPair = UDPServerSocket.recvfrom(bufferSize)
+    except ConnectionResetError:
+        LOGGER.warning("Connection reset while receiving data")
+        return
+    except OSError as e:
+        if "10054" in str(e):
+            LOGGER.warning("Client forcibly closed connection")
+            return
+        raise
+    
     message = byteAddressPair[0]
     address = byteAddressPair[1]
     
@@ -296,9 +317,14 @@ def customize_listening(UDPServerSocket, threads, state_manager):
         clientIP = "Client IP Address:{}".format(address)
         LOGGER.info(f"{clientIP}")
         
-        data, apid, type, subtype = SpacePacketDecoder(message)
-        j_command_packet = cmd_unloader(data)
-        LOGGER.info(f"OBC to SEMSIM: {j_command_packet}")
-        
-        cmd_ack_generator(j_command_packet, apid, address, state_manager, UDPServerSocket)
-        cmd_processing(j_command_packet, apid, type, subtype, address, UDPServerSocket, state_manager, count)
+        try:
+            data, apid, type, subtype = SpacePacketDecoder(message)
+            j_command_packet = cmd_unloader(data)
+            LOGGER.info(f"OBC to SEMSIM: {j_command_packet}")
+            
+            cmd_ack_generator(j_command_packet, apid, address, state_manager, UDPServerSocket)
+            cmd_processing(j_command_packet, apid, type, subtype, address, UDPServerSocket, state_manager, count)
+        except json.JSONDecodeError as e:
+            LOGGER.warning(f"Failed to decode JSON payload: {e}")
+        except Exception as e:
+            LOGGER.error(f"Error processing command: {e}")
