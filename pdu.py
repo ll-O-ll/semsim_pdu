@@ -249,8 +249,11 @@ def ResetUnitPwLines(ResetUnitPwLines, apid, state_manager):
     LogicalUnitIdn = LogicalUnitId[logic_unit_id]
     LOGGER.info(f"LogicalUnitId: {LogicalUnitIdn}")
     
-    NewItem_ResetUnitPwLines = ResetUnitPwLines["ResetUnitPwLines"]["Parameters"]
-    setattr(unit.unit_line_states, LogicalUnitIdn, NewItem_ResetUnitPwLines)
+    reset_mask = ResetUnitPwLines["ResetUnitPwLines"]["Parameters"]
+    current_value = getattr(unit.unit_line_states, LogicalUnitIdn)
+    new_value = current_value & ~reset_mask  # Clear the bits specified in the mask
+    setattr(unit.unit_line_states, LogicalUnitIdn, new_value)
+    LOGGER.info(f"Reset {LogicalUnitIdn}: 0x{current_value:04X} & ~0x{reset_mask:04X} = 0x{new_value:04X}")
 
 
 def OverwriteUnitPwLines(OverwriteUnitPwLines, apid, state_manager):
