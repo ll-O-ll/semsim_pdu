@@ -96,7 +96,13 @@ def SetUnitPwLines(SetUnitPwLines, apid, state_manager):
     """Set unit power lines"""
     unit = state_manager.get_unit(apid)
     
-    LogicalUnitIdn = LogicalUnitId[SetUnitPwLines["SetUnitPwLines"]["LogicUnitId"]]
+    logic_unit_id = SetUnitPwLines["SetUnitPwLines"]["LogicUnitId"]
+    
+    if logic_unit_id not in LogicalUnitId:
+        LOGGER.error(f"Invalid LogicUnitId: {logic_unit_id}. Valid range: 0-8")
+        raise ValueError(f"Invalid LogicUnitId: {logic_unit_id}. Valid range: 0-8")
+    
+    LogicalUnitIdn = LogicalUnitId[logic_unit_id]
     LOGGER.info(f"LogicalUnitId: {LogicalUnitIdn}")
     
     NewItem_SetUnitPwLines = SetUnitPwLines["SetUnitPwLines"]["Parameters"]
@@ -234,7 +240,13 @@ def ResetUnitPwLines(ResetUnitPwLines, apid, state_manager):
     """Reset unit power lines"""
     unit = state_manager.get_unit(apid)
     
-    LogicalUnitIdn = LogicalUnitId[ResetUnitPwLines["ResetUnitPwLines"]["LogicUnitId"]]
+    logic_unit_id = ResetUnitPwLines["ResetUnitPwLines"]["LogicUnitId"]
+    
+    if logic_unit_id not in LogicalUnitId:
+        LOGGER.error(f"Invalid LogicUnitId: {logic_unit_id}. Valid range: 0-8")
+        raise ValueError(f"Invalid LogicUnitId: {logic_unit_id}. Valid range: 0-8")
+    
+    LogicalUnitIdn = LogicalUnitId[logic_unit_id]
     LOGGER.info(f"LogicalUnitId: {LogicalUnitIdn}")
     
     NewItem_ResetUnitPwLines = ResetUnitPwLines["ResetUnitPwLines"]["Parameters"]
@@ -245,7 +257,13 @@ def OverwriteUnitPwLines(OverwriteUnitPwLines, apid, state_manager):
     """Overwrite unit power lines"""
     unit = state_manager.get_unit(apid)
     
-    LogicalUnitIdn = LogicalUnitId[OverwriteUnitPwLines["OverwriteUnitPwLines"]["LogicUnitId"]]
+    logic_unit_id = OverwriteUnitPwLines["OverwriteUnitPwLines"]["LogicUnitId"]
+    
+    if logic_unit_id not in LogicalUnitId:
+        LOGGER.error(f"Invalid LogicUnitId: {logic_unit_id}. Valid range: 0-8")
+        raise ValueError(f"Invalid LogicUnitId: {logic_unit_id}. Valid range: 0-8")
+    
+    LogicalUnitIdn = LogicalUnitId[logic_unit_id]
     LOGGER.info(f"LogicalUnitId: {LogicalUnitIdn}")
     
     NewItem_OverwriteUnitPwLines = OverwriteUnitPwLines["OverwriteUnitPwLines"]["Parameters"]

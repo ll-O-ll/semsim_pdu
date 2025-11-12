@@ -144,67 +144,92 @@ def cmd_processing(j_command_packet, apid, type, subtype, address, UDPServerSock
     t = Thread(target=send_converted_measurements, args=(j_command_packet, apid, type, subtype, address, UDPServerSocket, state_manager, count,))
     
     for cmd, param_list in j_command_packet.items():
-        if cmd == "ObcHeartBeat":
-            PduHeartBeat = pdu.ObcHeartBeat(j_command_packet, apid, state_manager)
-            json_object = json.dumps(json.loads(PduHeartBeat))
-            Response_PduHeartBeat = SpacePacketCommand(count, json_object, apid, type, subtype+1)
-            UDPServerSocket.sendto(Response_PduHeartBeat, address)
-            LOGGER.info(f"SEMSIM to OBC: {PduHeartBeat}")
-            
-        elif cmd == "GetPduStatus":
-            PduStatus = pdu.GetPduStatus(param_list, apid, state_manager)
-            json_object = json.dumps(json.loads(PduStatus))
-            Response_PduStatus = SpacePacketCommand(count, json_object, apid, type, subtype+1)
-            UDPServerSocket.sendto(Response_PduStatus, address)
-            LOGGER.info(f"SEMSIM to OBC: {PduStatus}")
-            
-        elif cmd == "PduGoMaintenance":
-            if t.is_alive():
-                t.join()
-            pdu.PduGoTo(cmd, apid, state_manager)
-            
-        elif cmd == "PduGoSafe":
-            if t.is_alive():
-                t.join()
-            pdu.PduGoTo(cmd, apid, state_manager)
-            
-        elif cmd == "PduGoOperate":
-            pdu.PduGoTo(cmd, apid, state_manager)
-            if not t.is_alive():
-                t.start()
+        try:
+            if cmd == "ObcHeartBeat":
+                PduHeartBeat = pdu.ObcHeartBeat(j_command_packet, apid, state_manager)
+                json_object = json.dumps(json.loads(PduHeartBeat))
+                Response_PduHeartBeat = SpacePacketCommand(count, json_object, apid, type, subtype+1)
+                UDPServerSocket.sendto(Response_PduHeartBeat, address)
+                LOGGER.info(f"SEMSIM to OBC: {PduHeartBeat}")
                 
-        elif cmd == "SetUnitPwLines":
-            pdu.SetUnitPwLines(j_command_packet, apid, state_manager)
+            elif cmd == "GetPduStatus":
+                PduStatus = pdu.GetPduStatus(param_list, apid, state_manager)
+                json_object = json.dumps(json.loads(PduStatus))
+                Response_PduStatus = SpacePacketCommand(count, json_object, apid, type, subtype+1)
+                UDPServerSocket.sendto(Response_PduStatus, address)
+                LOGGER.info(f"SEMSIM to OBC: {PduStatus}")
+                
+            elif cmd == "PduGoMaintenance":
+                if t.is_alive():
+                    t.join()
+                pdu.PduGoTo(cmd, apid, state_manager)
+                
+            elif cmd == "PduGoSafe":
+                if t.is_alive():
+                    t.join()
+                pdu.PduGoTo(cmd, apid, state_manager)
+                
+            elif cmd == "PduGoOperate":
+                pdu.PduGoTo(cmd, apid, state_manager)
+                if not t.is_alive():
+                    t.start()
+                    
+            elif cmd == "SetUnitPwLines":
+                pdu.SetUnitPwLines(j_command_packet, apid, state_manager)
+                
+            elif cmd == "GetUnitLineStates":
+                PduUnitLineStates = pdu.GetUnitLineStates(param_list, apid, state_manager)
+                json_object = json.dumps(json.loads(PduUnitLineStates))
+                Response_PduUnitLineStates = SpacePacketCommand(count, json_object, apid, type, subtype+1)
+                UDPServerSocket.sendto(Response_PduUnitLineStates, address)
+                LOGGER.info(f"SEMSIM to OBC: {PduUnitLineStates}")
+                
+            elif cmd == "ResetUnitPwLines":
+                pdu.ResetUnitPwLines(j_command_packet, apid, state_manager)
+                
+            elif cmd == "OverwriteUnitPwLines":
+                pdu.OverwriteUnitPwLines(j_command_packet, apid, state_manager)
+                
+            elif cmd == "GetRawMeasurements":
+                GetRawMeasurements = pdu.GetRawMeasurements(j_command_packet, apid, state_manager)
+                GetRawMeasurements_L = json.loads(GetRawMeasurements)
+                json_object = json.dumps(GetRawMeasurements_L)
+                Response_GetRawMeasurements = SpacePacketCommand(count, json_object, apid, type, subtype+1)
+                UDPServerSocket.sendto(Response_GetRawMeasurements, address)
+                
+            elif cmd == "GetConvertedMeasurements":
+                GetConvertedMeasurements = pdu.GetConvertedMeasurements(j_command_packet, apid, state_manager)
+                GetConvertedMeasurements_L = json.loads(GetConvertedMeasurements)
+                json_object = json.dumps(GetConvertedMeasurements_L)
+                Response_GetConvertedMeasurements = SpacePacketCommand(count, json_object, apid, type, subtype+1)
+                UDPServerSocket.sendto(Response_GetConvertedMeasurements, address)
+                
+            else:
+                LOGGER.info(f"OBC cmd_name: {cmd} Not Implemented")
+                
+        except ValueError as e:
+            LOGGER.error(f"Validation error for command {cmd}: {e}")
+            # Send error acknowledgement
+            unit = state_manager.get_unit(apid)
+            unit.msg_acknowledgement.RequestedMsgId = cmd
+            unit.msg_acknowledgement.PduReturnCode = 1  # Error code
+            json_object = json.dumps(unit.msg_acknowledgement.to_dict())
+            error_ack = SpacePacketCommand(count, json_object, apid, 1, 8)  # Type 1, Subtype 8 (error)
+            UDPServerSocket.sendto(error_ack, address)
+            LOGGER.info(f"SEMSIM to OBC (Error Ack): {unit.msg_acknowledgement.to_dict()}")
             
-        elif cmd == "GetUnitLineStates":
-            PduUnitLineStates = pdu.GetUnitLineStates(param_list, apid, state_manager)
-            json_object = json.dumps(json.loads(PduUnitLineStates))
-            Response_PduUnitLineStates = SpacePacketCommand(count, json_object, apid, type, subtype+1)
-            UDPServerSocket.sendto(Response_PduUnitLineStates, address)
-            LOGGER.info(f"SEMSIM to OBC: {PduUnitLineStates}")
-            
-        elif cmd == "ResetUnitPwLines":
-            pdu.ResetUnitPwLines(j_command_packet, apid, state_manager)
-            
-        elif cmd == "OverwriteUnitPwLines":
-            pdu.OverwriteUnitPwLines(j_command_packet, apid, state_manager)
-            
-        elif cmd == "GetRawMeasurements":
-            GetRawMeasurements = pdu.GetRawMeasurements(j_command_packet, apid, state_manager)
-            GetRawMeasurements_L = json.loads(GetRawMeasurements)
-            json_object = json.dumps(GetRawMeasurements_L)
-            Response_GetRawMeasurements = SpacePacketCommand(count, json_object, apid, type, subtype+1)
-            UDPServerSocket.sendto(Response_GetRawMeasurements, address)
-            
-        elif cmd == "GetConvertedMeasurements":
-            GetConvertedMeasurements = pdu.GetConvertedMeasurements(j_command_packet, apid, state_manager)
-            GetConvertedMeasurements_L = json.loads(GetConvertedMeasurements)
-            json_object = json.dumps(GetConvertedMeasurements_L)
-            Response_GetConvertedMeasurements = SpacePacketCommand(count, json_object, apid, type, subtype+1)
-            UDPServerSocket.sendto(Response_GetConvertedMeasurements, address)
-            
-        else:
-            LOGGER.info(f"OBC cmd_name: {cmd} Not Implemented")
+        except Exception as e:
+            LOGGER.error(f"Unexpected error processing command {cmd}: {e}")
+            # Send error acknowledgement
+            try:
+                unit = state_manager.get_unit(apid)
+                unit.msg_acknowledgement.RequestedMsgId = cmd
+                unit.msg_acknowledgement.PduReturnCode = 1  # Error code
+                json_object = json.dumps(unit.msg_acknowledgement.to_dict())
+                error_ack = SpacePacketCommand(count, json_object, apid, 1, 8)
+                UDPServerSocket.sendto(error_ack, address)
+            except:
+                pass  # If we can't send error ack, just log
 
 
 def cmd_unloader(packet_data_field):
@@ -327,4 +352,4 @@ def customize_listening(UDPServerSocket, threads, state_manager):
         except json.JSONDecodeError as e:
             LOGGER.warning(f"Failed to decode JSON payload: {e}")
         except Exception as e:
-            LOGGER.error(f"Error processing command: {e}")
+            LOGGER.error(f"Error processing packet from {address}: {e}")
