@@ -278,7 +278,9 @@ class RS422Handler:
                 return json.loads(response_json)
             
             elif command_name == "GetConvertedMeasurements":
-                response_json = pdu.GetConvertedMeasurements(params, self.apid, self.state_manager)
+                LOGGER.info(f"[RS422] Processing GetConvertedMeasurements with params: {params}")
+                response_json = pdu.GetConvertedMeasurements(json_command, self.apid, self.state_manager)
+                LOGGER.info(f"[RS422] GetConvertedMeasurements response: {response_json[:200]}...")
                 return json.loads(response_json)
             
             else:
@@ -293,7 +295,7 @@ class RS422Handler:
             return unit.msg_acknowledgement.to_dict()
         
         except Exception as e:
-            LOGGER.error(f"RS422 command processing error: {e}")
+            LOGGER.error(f"RS422 command processing error: {e}", exc_info=True)
             return None
     
     def _send_response(self, response_dict: dict, message_id: int, logical_unit_id: int):

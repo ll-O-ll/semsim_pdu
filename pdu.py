@@ -302,7 +302,13 @@ def GetConvertedMeasurements(ConvertedMeasurements, apid, state_manager):
     """Get converted measurements"""
     unit = state_manager.get_unit(apid)
     
-    LogicId = ConvertedMeasurements.get("GetConvertedMeasurements", {}).get("LogicUnitId", 0)
+    if isinstance(ConvertedMeasurements, dict):
+        if "GetConvertedMeasurements" in ConvertedMeasurements:
+            LogicId = ConvertedMeasurements["GetConvertedMeasurements"].get("LogicUnitId", 0)
+        else:
+            LogicId = ConvertedMeasurements.get("LogicUnitId", 0)
+    else:
+        LogicId = 0
     
     # Get current unit line states
     unit_line_states_dict = unit.unit_line_states.to_dict()
@@ -312,10 +318,13 @@ def GetConvertedMeasurements(ConvertedMeasurements, apid, state_manager):
     LOGGER.info(f"GetConvertedMeasurements LogicId={LogicId}, Single_Line_Status: {Single_Line_Status}")
     
     if int(Single_Line_Status) != 0:
-        return json.dumps(unit.converted_measurements.to_dict())
+        measurements_dict = unit.converted_measurements.to_dict()
+        LOGGER.info(f"Returning converted measurements: {list(measurements_dict.keys())}")
+        return json.dumps(measurements_dict)
     else:
         # Return empty measurements
         from pdu_state import PduConvertedMeasurementsState
+        LOGGER.info("Returning empty converted measurements")
         return json.dumps(PduConvertedMeasurementsState().to_dict())
 
 
