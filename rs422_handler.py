@@ -303,6 +303,13 @@ class RS422Handler:
         try:
             # Convert response to JSON bytes
             response_json = json.dumps(response_dict)
+            response_size = len(response_json)
+            
+            LOGGER.info(f"[RS422 TX] Response size: {response_size} bytes")
+            
+            if response_size > 4096:
+                LOGGER.warning(f"[RS422 TX] Large response ({response_size} bytes), may cause issues")
+            
             payload = list(response_json.encode('utf-8'))
             
             # Create RS422 frame
@@ -312,12 +319,26 @@ class RS422Handler:
             for byte in payload:
                 packet.payload.append(byte)
             
-            frame = encode_pdu_packet(packet)
+            try:
+                frame = encode_pdu_packet(packet)
+            except Exception as encode_error:
+                LOGGER.error(f"[RS422 TX] Failed to encode packet: {encode_error}")
+                return
+            
+            LOGGER.info(f"[RS422 TX] Frame size: {len(frame)} bytes")
             
             # Send frame
-            self.serial_port.write(frame)
-            LOGGER.debug(f"RS422 TX: {frame.hex()}")
-            LOGGER.info(f"SEMSIM to OBC (RS422): {response_dict}")
+            bytes_written = self.serial_port.write(frame)
+            
+            if bytes_written != len(frame):
+                LOGGER.error(f"[RS422 TX] Only wrote {bytes_written}/{len(frame)} bytes")
+            else:
+                LOGGER.info(f"[RS422 TX] Successfully sent {bytes_written} bytes")
+            
+            self.serial_port.flush()
+            
+            LOGGER.debug(f"RS422 TX: {frame[:100].hex()}...")  # Log first 100 bytes only
+            LOGGER.info(f"SEMSIM to OBC (RS422): {str(response_dict)[:200]}...")  # Truncate log
             
         except Exception as e:
-            LOGGER.error(f"RS422 send error: {e}")
+            LOGGER.error(f"RS422 send error: {e}", exc_info=True)
